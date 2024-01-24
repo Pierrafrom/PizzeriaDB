@@ -45,6 +45,8 @@ END;
 //
 DELIMITER ;
 
+ -- --------------------------------- BEFORE INSERT TRIGGERS ---------------------------------
+
 DELIMITER //
 CREATE OR REPLACE TRIGGER after_order_pizza_insert
     AFTER INSERT
@@ -63,6 +65,10 @@ END;
 //
 DELIMITER ;
 
+
+
+-- --------------------------------- AFTER INSERT TRIGGERS ---------------------------------
+
 DELIMITER //
 CREATE OR REPLACE TRIGGER after_order_dessert_insert
     AFTER INSERT
@@ -76,7 +82,7 @@ BEGIN
             VALUES ('TRIGGER_ERROR', CONCAT('Error while updating stock for dessert ID: ', NEW.dessertId));
         END;
 
-    -- Uodate the stock of the dessert
+    -- Update the stock of the dessert
     CALL UpdateDessertStock(NEW.dessertId, NEW.dessertQuantity, 'REMOVE');
 END;
 //
@@ -107,13 +113,6 @@ CREATE OR REPLACE TRIGGER after_order_wine_insert
     ON ORDER_WINE
     FOR EACH ROW
 BEGIN
-    DECLARE exit handler for sqlexception
-        BEGIN
-            -- Insert the alert in case of error
-            INSERT INTO ALERT (alertType, alertMessage)
-            VALUES ('TRIGGER_ERROR', CONCAT('Error while updating stock for wine ID: ', NEW.wineId));
-        END;
-
     -- Update the stock of the wine
     CALL UpdateWineStock(NEW.wineId, NEW.wineQuantity, 'REMOVE');
 END;
@@ -126,13 +125,6 @@ CREATE OR REPLACE TRIGGER after_order_soda_insert
     ON ORDER_SODA
     FOR EACH ROW
 BEGIN
-    DECLARE exit handler for sqlexception
-        BEGIN
-            -- Insert the alert in case of error
-            INSERT INTO ALERT (alertType, alertMessage)
-            VALUES ('TRIGGER_ERROR', CONCAT('Error while updating stock for soda ID: ', NEW.sodaId));
-        END;
-
     -- Update the stock of the soda
     CALL UpdateSodaStock(NEW.sodaId, NEW.sodaQuantity, 'REMOVE');
 END;

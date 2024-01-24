@@ -105,7 +105,8 @@ CREATE TABLE
         'PIZZA_READY',
         'TRIGGER_ERROR'
         )                  NOT NULL,
-    alertMessage VARCHAR(200)
+    alertMessage VARCHAR(200),
+    seen        BOOLEAN   NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE
@@ -215,10 +216,9 @@ CREATE TABLE
     PIZZA_CUSTOM_INGREDIENT
 (
     pizzaCustomId       SMALLINT UNSIGNED,
-    ingredientAddedId   INT UNSIGNED,
-    ingredientRemovedId INT UNSIGNED,
+    ingredientAddedId   INT UNSIGNED  NULL,
+    ingredientRemovedId INT UNSIGNED  NULL,
     quantityAdded       DECIMAL(5, 2) NOT NULL,
-    quantityRemoved     DECIMAL(5, 2) NOT NULL,
     PRIMARY KEY (pizzaCustomId, ingredientAddedId, ingredientRemovedId),
     FOREIGN KEY (pizzaCustomId) REFERENCES PIZZA_CUSTOM (pizzaId),
     FOREIGN KEY (ingredientAddedId) REFERENCES INGREDIENT (ingredientId),

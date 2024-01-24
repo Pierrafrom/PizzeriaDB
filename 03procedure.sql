@@ -202,14 +202,35 @@ DELIMITER //
 CREATE OR REPLACE PROCEDURE UpdateSodaStock(IN p_sodaId SMALLINT UNSIGNED, IN p_quantity SMALLINT UNSIGNED,
                                             IN p_operation ENUM ('ADD', 'REMOVE'))
 BEGIN
+    DECLARE current_stock SMALLINT UNSIGNED;
+    DECLARE exit handler for sqlexception
+        BEGIN
+            GET DIAGNOSTICS CONDITION 1
+                @p_sqlstate = RETURNED_SQLSTATE,
+                @p_errno = MYSQL_ERRNO,
+                @p_message = MESSAGE_TEXT;
+            -- Insert an alert with detailed error description
+            INSERT INTO ALERT (alertType, alertMessage)
+            VALUES ('TRIGGER_ERROR', CONCAT('Error in UpdateSodaStock for Soda ID: ', p_sodaId,
+                                            '; SQLSTATE: ', @p_sqlstate,
+                                            '; Error No: ', @p_errno,
+                                            '; Message: ', @p_message));
+        END;
+
+    SELECT stock INTO current_stock FROM SODA WHERE sodaId = p_sodaId;
+
     IF p_operation = 'ADD' THEN
         UPDATE SODA
         SET stock = stock + p_quantity
         WHERE sodaId = p_sodaId;
     ELSEIF p_operation = 'REMOVE' THEN
-        UPDATE SODA
-        SET stock = stock - p_quantity
-        WHERE sodaId = p_sodaId;
+        IF current_stock >= p_quantity THEN
+            UPDATE SODA
+            SET stock = stock - p_quantity
+            WHERE sodaId = p_sodaId;
+        ELSE
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient stock to remove';
+        END IF;
     END IF;
 END //
 DELIMITER ;
@@ -218,17 +239,39 @@ DELIMITER //
 CREATE OR REPLACE PROCEDURE UpdateWineStock(IN p_wineId SMALLINT UNSIGNED, IN p_quantity SMALLINT UNSIGNED,
                                             IN p_operation ENUM ('ADD', 'REMOVE'))
 BEGIN
+    DECLARE current_stock SMALLINT UNSIGNED;
+    DECLARE exit handler for sqlexception
+        BEGIN
+            GET DIAGNOSTICS CONDITION 1
+                @p_sqlstate = RETURNED_SQLSTATE,
+                @p_errno = MYSQL_ERRNO,
+                @p_message = MESSAGE_TEXT;
+            -- Insert an alert with detailed error description
+            INSERT INTO ALERT (alertType, alertMessage)
+            VALUES ('TRIGGER_ERROR', CONCAT('Error in UpdateWineStock for Wine ID: ', p_wineId,
+                                            '; SQLSTATE: ', @p_sqlstate,
+                                            '; Error No: ', @p_errno,
+                                            '; Message: ', @p_message));
+        END;
+
+    SELECT stock INTO current_stock FROM WINE WHERE wineId = p_wineId;
+
     IF p_operation = 'ADD' THEN
         UPDATE WINE
         SET stock = stock + p_quantity
         WHERE wineId = p_wineId;
     ELSEIF p_operation = 'REMOVE' THEN
-        UPDATE WINE
-        SET stock = stock - p_quantity
-        WHERE wineId = p_wineId;
+        IF current_stock >= p_quantity THEN
+            UPDATE WINE
+            SET stock = stock - p_quantity
+            WHERE wineId = p_wineId;
+        ELSE
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient stock to remove';
+        END IF;
     END IF;
 END //
 DELIMITER ;
+
 
 DELIMITER //
 CREATE OR REPLACE PROCEDURE GetUserOrCreate(IN p_phone VARCHAR(20), IN p_firstName VARCHAR(50),
@@ -369,6 +412,17 @@ BEGIN
 END //
 DELIMITER ;
 
+DELIMITER //
+CREATE OR REPLACE PROCEDURE AddCustomPizzaToOrder(
+    IN p_orderId INT,
+    IN p_customPizzaId SMALLINT UNSIGNED,
+    IN p_pizzaQuantity SMALLINT UNSIGNED
+)
+BEGIN
+    INSERT INTO ORDER_PIZZA_CUSTOM (orderId, pizzaCustomId, pizzaQuantity)
+    VALUES (p_orderId, p_customPizzaId, p_pizzaQuantity);
+END //
+DELIMITER ;
 
 DELIMITER //
 CREATE OR REPLACE PROCEDURE UpdateOrderStatus(IN p_orderId INT,
@@ -392,17 +446,441 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE OR REPLACE PROCEDURE UpdateIngredientStock(IN p_ingredientId INT, IN p_quantity DECIMAL(10, 2),
-                                                  IN p_operation ENUM ('ADD', 'REMOVE'))
+CREATE OR REPLACE PROCEDURE UpdateIngredientStock(IN p_ingredientId INT, IN p_quantity DECIMAL(10, 2))
 BEGIN
-    IF p_operation = 'ADD' THEN
-        UPDATE INGREDIENT
-        SET ingredientQuantity = ingredientQuantity + p_quantity
-        WHERE ingredientId = p_ingredientId;
-    ELSEIF p_operation = 'REMOVE' THEN
-        UPDATE INGREDIENT
-        SET ingredientQuantity = ingredientQuantity - p_quantity
-        WHERE ingredientId = p_ingredientId;
+    UPDATE INGREDIENT
+    SET ingredientQuantity = p_quantity
+    WHERE ingredientId = p_ingredientId;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE ReplaceWineStock(IN p_wineId INT, IN p_quantity INT)
+BEGIN
+    UPDATE WINE
+    SET stock = p_quantity
+    WHERE wineId = p_wineId;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE ReplaceSodaStock(IN p_sodaId INT, IN p_quantity INT)
+BEGIN
+    UPDATE SODA
+    SET stock = p_quantity
+    WHERE sodaId = p_sodaId;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE CreateCustomPizza(
+    IN p_originalPizzaId SMALLINT UNSIGNED,
+    IN p_addedIngredient1 INT UNSIGNED,
+    IN p_addedIngredient2 INT UNSIGNED,
+    IN p_addedIngredient3 INT UNSIGNED,
+    IN p_removedIngredient1 INT UNSIGNED,
+    IN p_removedIngredient2 INT UNSIGNED,
+    IN p_removedIngredient3 INT UNSIGNED,
+    OUT p_customPizzaId SMALLINT UNSIGNED
+)
+BEGIN
+    DECLARE my_custom_error_message VARCHAR(255);
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            GET DIAGNOSTICS CONDITION 1
+                @p_sqlstate = RETURNED_SQLSTATE, @p_message = MESSAGE_TEXT;
+            SET my_custom_error_message = CONCAT('Custom Error: ', @p_message);
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = my_custom_error_message;
+        END;
+
+    INSERT INTO PIZZA_CUSTOM (originalPizza) VALUES (p_originalPizzaId);
+    SET p_customPizzaId = LAST_INSERT_ID();
+
+    -- Add the ingredients
+    IF p_addedIngredient1 <> 40 AND p_addedIngredient1 > 0 THEN
+        INSERT INTO PIZZA_CUSTOM_INGREDIENT (pizzaCustomId, ingredientAddedId, quantityAdded, ingredientRemovedId)
+        VALUES (p_customPizzaId, p_addedIngredient1, 50, 40);
+    END IF;
+    IF p_addedIngredient2 <> 40 AND p_addedIngredient2 > 0 THEN
+        INSERT INTO PIZZA_CUSTOM_INGREDIENT (pizzaCustomId, ingredientAddedId, quantityAdded, ingredientRemovedId)
+        VALUES (p_customPizzaId, p_addedIngredient2, 50, 40);
+    END IF;
+    IF p_addedIngredient3 <> 40 AND p_addedIngredient3 > 0 THEN
+        INSERT INTO PIZZA_CUSTOM_INGREDIENT (pizzaCustomId, ingredientAddedId, quantityAdded, ingredientRemovedId)
+        VALUES (p_customPizzaId, p_addedIngredient3, 50, 40);
+    END IF;
+
+    -- Remove the ingredients
+    IF p_removedIngredient1 <> 40 AND p_removedIngredient1 > 0 THEN
+        INSERT INTO PIZZA_CUSTOM_INGREDIENT (pizzaCustomId, ingredientAddedId, quantityAdded, ingredientRemovedId)
+        VALUES (p_customPizzaId, 40, 0, p_removedIngredient1);
+    END IF;
+    IF p_removedIngredient2 <> 40 AND p_removedIngredient2 > 0 THEN
+        INSERT INTO PIZZA_CUSTOM_INGREDIENT (pizzaCustomId, ingredientAddedId, quantityAdded, ingredientRemovedId)
+        VALUES (p_customPizzaId, 40, 0, p_removedIngredient2);
+    END IF;
+    IF p_removedIngredient3 <> 40 AND p_removedIngredient3 > 0 THEN
+        INSERT INTO PIZZA_CUSTOM_INGREDIENT (pizzaCustomId, ingredientAddedId, quantityAdded, ingredientRemovedId)
+        VALUES (p_customPizzaId, 40, 0, p_removedIngredient3);
     END IF;
 END //
 DELIMITER ;
+
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE AdminLogin(IN inputEmail VARCHAR(255),
+                                       OUT outUserID INT,
+                                       OUT outHashedPassword CHAR(60))
+BEGIN
+    SET outUserID = -1;
+
+    SELECT id, password
+    INTO outUserID, outHashedPassword
+    FROM VIEW_MANAGERS
+    WHERE email = inputEmail;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE CreatePizzaWithIngredients(
+    IN p_pizzaName VARCHAR(50),
+    IN p_pizzaPrice DECIMAL(5, 2),
+    IN p_spotlight BOOLEAN,
+    IN p_ingredientId1 INT,
+    IN p_quantity1 DECIMAL(5, 2),
+    IN p_ingredientId2 INT,
+    IN p_quantity2 DECIMAL(5, 2),
+    IN p_ingredientId3 INT,
+    IN p_quantity3 DECIMAL(5, 2),
+    IN p_ingredientId4 INT,
+    IN p_quantity4 DECIMAL(5, 2),
+    IN p_ingredientId5 INT,
+    IN p_quantity5 DECIMAL(5, 2),
+    IN p_ingredientId6 INT,
+    IN p_quantity6 DECIMAL(5, 2),
+    IN p_ingredientId7 INT,
+    IN p_quantity7 DECIMAL(5, 2),
+    IN p_ingredientId8 INT,
+    IN p_quantity8 DECIMAL(5, 2),
+    OUT p_newId INT
+)
+BEGIN
+    DECLARE my_custom_error_message VARCHAR(255);
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            GET DIAGNOSTICS CONDITION 1
+                @p_sqlstate = RETURNED_SQLSTATE, @p_message = MESSAGE_TEXT;
+            SET my_custom_error_message = CONCAT('Custom Error: ', @p_message);
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = my_custom_error_message;
+        END;
+
+    START TRANSACTION;
+
+    INSERT INTO PIZZA(pizzaName, pizzaPrice, spotlight) VALUES (p_pizzaName, p_pizzaPrice, p_spotlight);
+    SET p_newId = LAST_INSERT_ID();
+
+    IF p_ingredientId1 IS NOT NULL THEN
+        INSERT INTO PIZZA_INGREDIENT(pizzaId, ingredientId, quantity) VALUES (p_newId, p_ingredientId1, p_quantity1);
+    END IF;
+    IF p_ingredientId2 IS NOT NULL THEN
+        INSERT INTO PIZZA_INGREDIENT(pizzaId, ingredientId, quantity) VALUES (p_newId, p_ingredientId2, p_quantity2);
+    END IF;
+    IF p_ingredientId3 IS NOT NULL THEN
+        INSERT INTO PIZZA_INGREDIENT(pizzaId, ingredientId, quantity) VALUES (p_newId, p_ingredientId3, p_quantity3);
+    END IF;
+    IF p_ingredientId4 IS NOT NULL THEN
+        INSERT INTO PIZZA_INGREDIENT(pizzaId, ingredientId, quantity) VALUES (p_newId, p_ingredientId4, p_quantity4);
+    END IF;
+    IF p_ingredientId5 IS NOT NULL THEN
+        INSERT INTO PIZZA_INGREDIENT(pizzaId, ingredientId, quantity) VALUES (p_newId, p_ingredientId5, p_quantity5);
+    END IF;
+    IF p_ingredientId6 IS NOT NULL THEN
+        INSERT INTO PIZZA_INGREDIENT(pizzaId, ingredientId, quantity) VALUES (p_newId, p_ingredientId6, p_quantity6);
+    END IF;
+    IF p_ingredientId7 IS NOT NULL THEN
+        INSERT INTO PIZZA_INGREDIENT(pizzaId, ingredientId, quantity) VALUES (p_newId, p_ingredientId7, p_quantity7);
+    END IF;
+    IF p_ingredientId8 IS NOT NULL THEN
+        INSERT INTO PIZZA_INGREDIENT(pizzaId, ingredientId, quantity) VALUES (p_newId, p_ingredientId8, p_quantity8);
+    END IF;
+    COMMIT;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE CreateDessertWithIngredients(
+    IN p_dessertName VARCHAR(50),
+    IN p_dessertPrice DECIMAL(5, 2),
+    IN p_spotlight BOOLEAN,
+    IN p_ingredientId1 INT,
+    IN p_quantity1 DECIMAL(5, 2),
+    IN p_ingredientId2 INT,
+    IN p_quantity2 DECIMAL(5, 2),
+    IN p_ingredientId3 INT,
+    IN p_quantity3 DECIMAL(5, 2),
+    IN p_ingredientId4 INT,
+    IN p_quantity4 DECIMAL(5, 2),
+    IN p_ingredientId5 INT,
+    IN p_quantity5 DECIMAL(5, 2),
+    IN p_ingredientId6 INT,
+    IN p_quantity6 DECIMAL(5, 2),
+    IN p_ingredientId7 INT,
+    IN p_quantity7 DECIMAL(5, 2),
+    IN p_ingredientId8 INT,
+    IN p_quantity8 DECIMAL(5, 2),
+    OUT p_newId INT
+)
+BEGIN
+    DECLARE my_custom_error_message VARCHAR(255);
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            GET DIAGNOSTICS CONDITION 1
+                @p_sqlstate = RETURNED_SQLSTATE, @p_message = MESSAGE_TEXT;
+            SET my_custom_error_message = CONCAT('Custom Error: ', @p_message);
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = my_custom_error_message;
+        END;
+
+    START TRANSACTION;
+
+    INSERT INTO DESSERT(dessertName, dessertPrice, spotlight)
+    VALUES (p_dessertName, p_dessertPrice, p_spotlight);
+    SET p_newId = LAST_INSERT_ID();
+
+    IF p_ingredientId1 IS NOT NULL THEN
+        INSERT INTO DESSERT_INGREDIENT(dessertId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId1, p_quantity1);
+    END IF;
+    IF p_ingredientId2 IS NOT NULL THEN
+        INSERT INTO DESSERT_INGREDIENT(dessertId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId2, p_quantity2);
+    END IF;
+    IF p_ingredientId3 IS NOT NULL THEN
+        INSERT INTO DESSERT_INGREDIENT(dessertId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId3, p_quantity3);
+    END IF;
+    IF p_ingredientId4 IS NOT NULL THEN
+        INSERT INTO DESSERT_INGREDIENT(dessertId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId4, p_quantity4);
+    END IF;
+    IF p_ingredientId5 IS NOT NULL THEN
+        INSERT INTO DESSERT_INGREDIENT(dessertId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId5, p_quantity5);
+    END IF;
+    IF p_ingredientId6 IS NOT NULL THEN
+        INSERT INTO DESSERT_INGREDIENT(dessertId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId6, p_quantity6);
+    END IF;
+    IF p_ingredientId7 IS NOT NULL THEN
+        INSERT INTO DESSERT_INGREDIENT(dessertId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId7, p_quantity7);
+    END IF;
+    IF p_ingredientId8 IS NOT NULL THEN
+        INSERT INTO DESSERT_INGREDIENT(dessertId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId8, p_quantity8);
+    END IF;
+    COMMIT;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE CreateCocktailWithIngredients(
+    IN p_cocktailName VARCHAR(50),
+    IN p_price DECIMAL(5, 2),
+    IN p_alcoholPercentage DECIMAL(4, 2),
+    IN p_spotlight BOOLEAN,
+    IN p_ingredientId1 INT,
+    IN p_quantity1 DECIMAL(5, 2),
+    IN p_ingredientId2 INT,
+    IN p_quantity2 DECIMAL(5, 2),
+    IN p_ingredientId3 INT,
+    IN p_quantity3 DECIMAL(5, 2),
+    IN p_ingredientId4 INT,
+    IN p_quantity4 DECIMAL(5, 2),
+    IN p_ingredientId5 INT,
+    IN p_quantity5 DECIMAL(5, 2),
+    IN p_ingredientId6 INT,
+    IN p_quantity6 DECIMAL(5, 2),
+    IN p_ingredientId7 INT,
+    IN p_quantity7 DECIMAL(5, 2),
+    IN p_ingredientId8 INT,
+    IN p_quantity8 DECIMAL(5, 2),
+    OUT p_newId INT
+)
+BEGIN
+    DECLARE my_custom_error_message VARCHAR(255);
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            GET DIAGNOSTICS CONDITION 1
+                @p_sqlstate = RETURNED_SQLSTATE, @p_message = MESSAGE_TEXT;
+            SET my_custom_error_message = CONCAT('Custom Error: ', @p_message);
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = my_custom_error_message;
+        END;
+
+    START TRANSACTION;
+
+    INSERT INTO COCKTAIL(cocktailName, price, alcoholPercentage, spotlight)
+    VALUES (p_cocktailName, p_price, p_alcoholPercentage, p_spotlight);
+    SET p_newId = LAST_INSERT_ID();
+
+    IF p_ingredientId1 IS NOT NULL THEN
+        INSERT INTO COCKTAIL_INGREDIENT(cocktailId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId1, p_quantity1);
+    END IF;
+    IF p_ingredientId2 IS NOT NULL THEN
+        INSERT INTO COCKTAIL_INGREDIENT(cocktailId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId2, p_quantity2);
+    END IF;
+    IF p_ingredientId3 IS NOT NULL THEN
+        INSERT INTO COCKTAIL_INGREDIENT(cocktailId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId3, p_quantity3);
+    END IF;
+    IF p_ingredientId4 IS NOT NULL THEN
+        INSERT INTO COCKTAIL_INGREDIENT(cocktailId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId4, p_quantity4);
+    END IF;
+    IF p_ingredientId5 IS NOT NULL THEN
+        INSERT INTO COCKTAIL_INGREDIENT(cocktailId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId5, p_quantity5);
+    END IF;
+    IF p_ingredientId6 IS NOT NULL THEN
+        INSERT INTO COCKTAIL_INGREDIENT(cocktailId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId6, p_quantity6);
+    END IF;
+    IF p_ingredientId7 IS NOT NULL THEN
+        INSERT INTO COCKTAIL_INGREDIENT(cocktailId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId7, p_quantity7);
+    END IF;
+    IF p_ingredientId8 IS NOT NULL THEN
+        INSERT INTO COCKTAIL_INGREDIENT(cocktailId, ingredientId, quantity)
+        VALUES (p_newId, p_ingredientId8, p_quantity8);
+    END IF;
+    COMMIT;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE CreateWine(
+    IN p_wineName VARCHAR(50),
+    IN p_glassPrice DECIMAL(5, 2),
+    IN p_bottlePrice DECIMAL(6, 2),
+    IN p_domain VARCHAR(50),
+    IN p_grapeVariety VARCHAR(50),
+    IN p_origin VARCHAR(50),
+    IN p_alcoholPercentage DECIMAL(4, 2),
+    IN p_year SMALLINT,
+    IN p_color ENUM ('RED', 'WHITE', 'ROSE'),
+    IN p_spotlight BOOLEAN,
+    IN p_stock SMALLINT UNSIGNED,
+    IN p_bottleType ENUM ('BOTTLE', 'PICCOLO', 'MAGNUM', 'JEROBOAM', 'REHOBOAM', 'MATHUSALEM'),
+    OUT p_newId INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            SET p_newId = -1;
+        END;
+
+    START TRANSACTION;
+
+    INSERT INTO WINE(wineName, glassPrice, bottlePrice, domain, grapeVariety, origin,
+                     alcoholPercentage, year, color, spotlight, stock, bottleType)
+    VALUES (p_wineName, p_glassPrice, p_bottlePrice, p_domain, p_grapeVariety, p_origin,
+            p_alcoholPercentage, p_year, p_color, p_spotlight, p_stock, p_bottleType);
+
+    SET p_newId = LAST_INSERT_ID();
+    COMMIT;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE CreateSoda(
+    IN p_sodaName VARCHAR(50),
+    IN p_price DECIMAL(5, 2),
+    IN p_stock SMALLINT UNSIGNED,
+    IN p_bottleType ENUM ('BOTTLE', 'CAN'),
+    IN p_spotlight BOOLEAN,
+    OUT p_newId INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            SET p_newId = -1;
+        END;
+
+    START TRANSACTION;
+
+    INSERT INTO SODA(sodaName, price, stock, bottleType, spotlight)
+    VALUES (p_sodaName, p_price, p_stock, p_bottleType, p_spotlight);
+
+    SET p_newId = LAST_INSERT_ID();
+    COMMIT;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE CreateIngredient(
+    IN p_ingredientName VARCHAR(50),
+    IN p_ingredientDescription VARCHAR(100),
+    IN p_ingredientQuantity DECIMAL(10, 2),
+    IN p_isAllergen BOOLEAN,
+    IN p_unit ENUM ('G', 'KG', 'ML', 'L', 'CL', 'MG'),
+    OUT p_newId INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            SET p_newId = -1;
+        END;
+
+    START TRANSACTION;
+
+    INSERT INTO INGREDIENT(ingredientName, ingredientDescription, ingredientQuantity, isAllergen, unit)
+    VALUES (p_ingredientName, p_ingredientDescription, p_ingredientQuantity, p_isAllergen, p_unit);
+
+    SET p_newId = LAST_INSERT_ID();
+    COMMIT;
+END //
+DELIMITER ;
+
+DELIMITER //
+
+CREATE OR REPLACE PROCEDURE DeleteItem(IN itemId INT, IN itemType VARCHAR(10))
+BEGIN
+    SET FOREIGN_KEY_CHECKS = 0;
+    CASE itemType
+        WHEN 'PIZZA' THEN DELETE FROM PIZZA WHERE pizzaId = itemId;
+        WHEN 'DESSERT' THEN DELETE FROM DESSERT WHERE dessertId = itemId;
+        WHEN 'COCKTAIL' THEN DELETE FROM COCKTAIL WHERE cocktailId = itemId;
+        WHEN 'WINE' THEN DELETE FROM WINE WHERE wineId = itemId;
+        WHEN 'INGREDIENT' THEN DELETE FROM INGREDIENT WHERE ingredientId = itemId;
+        WHEN 'SODA' THEN DELETE FROM SODA WHERE sodaId = itemId;
+        ELSE SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Invalid item type';
+        END CASE;
+    SET FOREIGN_KEY_CHECKS = 1;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE OR REPLACE PROCEDURE ToggleSpotlight(IN itemId INT, IN itemType VARCHAR(10))
+BEGIN
+    CASE itemType
+        WHEN 'PIZZA' THEN UPDATE PIZZA SET spotlight = NOT spotlight WHERE pizzaId = itemId;
+        WHEN 'DESSERT' THEN UPDATE DESSERT SET spotlight = NOT spotlight WHERE dessertId = itemId;
+        WHEN 'COCKTAIL' THEN UPDATE COCKTAIL SET spotlight = NOT spotlight WHERE cocktailId = itemId;
+        WHEN 'WINE' THEN UPDATE WINE SET spotlight = NOT spotlight WHERE wineId = itemId;
+        WHEN 'SODA' THEN UPDATE SODA SET spotlight = NOT spotlight WHERE sodaId = itemId;
+        ELSE SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Invalid item type';
+        END CASE;
+END //
+
+DELIMITER ;
+
+

@@ -12,11 +12,12 @@ VALUES ('Chem. de Bellevue', 7, '91190', 'Gif-sur-Yvette', 'FR', 48.695852, 2.12
        ('Av. du Général Leclerc', 18, '91190', 'Gif-sur-Yvette', 'FR', 48.695322, 2.118908),      -- 11
        ('Rue de la Division Leclerc', 7, '78460', 'Chevreuse', 'FR', 48.707166, 2.040801),        -- 12
        ('Rue Victor Hugo', 2, '91120', 'Palaiseau', 'FR', 48.714239, 2.254248),                   -- 13
-			 ('Main Street', 123, '12345', 'Springfield', 'US', 40.7128, -74.0060),                     -- 14
+       ('Main Street', 123, '12345', 'Springfield', 'US', 40.7128, -74.0060),                     -- 14
        ('Second Street', 456, '23456', 'Shelbyville', 'US', 41.8781, -87.6298),                   -- 15
        ('Third Avenue', 789, '34567', 'Ogdenville', 'US', 34.0522, -118.2437),                    -- 16
        ('Fourth Blvd', 101, '45678', 'North Haverbrook', 'US', 37.7749, -122.4194),               -- 17
-       ('Fifth Lane', 202, '56789', 'Capital City', 'US', 39.9526, -75.1652);                     -- 18
+       ('Fifth Lane', 202, '56789', 'Capital City', 'US', 39.9526, -75.1652); -- 18
+
 
 INSERT INTO INGREDIENT (ingredientName,
                         ingredientDescription,
@@ -61,9 +62,11 @@ VALUES ('Tomato sauce', 'Used as a base for various pizzas', 5000, FALSE, 'ML'),
        ('Banana', 'Banana', 5000, FALSE, 'G'),                                                -- 36
        ('Apple', 'Apple', 5000, FALSE, 'G'),                                                  -- 37
        ('Orange', 'Orange', 5000, FALSE, 'G'),                                                -- 38
-       ('Cherry', 'Cherry', 5000, FALSE, 'G');                                                -- 39
+       ('Cherry', 'Cherry', 5000, FALSE, 'G'),                                                -- 39
+       ('Empty', 'Placeholder for pizza custom', 99999999.99, FALSE, 'G'); -- 40
 
-INSERT INTO PIZZA (pizzaName, pizzaPrice, spotlight)
+INSERT
+INTO PIZZA (pizzaName, pizzaPrice, spotlight)
 VALUES ('Marinara', 9.99, FALSE),
        ('Margherita', 10.99, TRUE),
        ('Pepperoni', 12.99, TRUE),
@@ -208,55 +211,75 @@ VALUES (1, 34, 300), -- Panna cotta with red berries
 
 INSERT INTO EMPLOYEE (employeePosition, employeeFirstName, employeeLastName, employeeEmail, employeePassword,
                       employeePhone, addressId)
-VALUES ('DELIVERY_PERSON', 'Vito', 'Corleone', 'vito.corleone@email.com', '$2y$10$t9Uzz/8ZElYpGVplhEVT6uJ5tk75C7QdKRO5XyFWeAb7NyDv2wGVq', '+33775550681', 1),
-       ('DELIVERY_PERSON', 'Michael', 'Corleone', 'michael.corleone@email.com', '$2y$10$DMOB3vO7q5mCbLxLQAH4Ju8ozMCQ/.h8sR1o9M676nm2pUO3Ztgy6', '+33655504415', 2),
-       ('DELIVERY_PERSON', 'Santino', 'Corleone', 'santino.corleone@email.com', '$2y$10$.5N52uOGUVu8VRdV5zRht.Wg/IbtW2MsN4y.qSmR0gTQT7UzaCoIG', '+33775550306', 3),
-       ('DELIVERY_PERSON', 'Tom', 'Hagen', 'tom.hagen@email.com', '$2y$10$j9AooWmrxpAMiQZz4cYsyOhjFv0jRTgLdUAbFTLekhr4Y0id/Qh.a', '+33700555917', 4),
-       ('DELIVERY_PERSON', 'Fredo', 'Corleone', 'fredo.corleone@email.com', '$2y$10$vDol.blnFNAxVTNBjhXETe2vQum.BAXP.WFuwQUOFKqb9ZSOCNXee', '+33700555620', 5),
-       ('DELIVERY_PERSON', 'Clemenza', 'Peter', 'clemenza.peter@email.com', '$2y$10$Y.s7wCVyTfywvHz7pOllaOKL0U8eny9Yoty2krLI.65oYjs3.vWom', '+33655510178', 6),
-       ('DELIVERY_PERSON', 'Tessio', 'Salvatore', 'tessio.salvatore@email.com', '$2y$10$LbfjF4fA/UPRrLUu3To1durOwjtMESagNH.NnGioaecedBXSg.CNO', '+33700555130', 7),
-       ('DELIVERY_PERSON', 'Luca', 'Brasi', 'luca.brasi@email.com', '$2y$10$qJhABnd.BZMdcedVa17J8.d6i38NzH/7aREh6ZozEYMO/A8FxC4YG', '+33700555721', 8),
-       ('DELIVERY_PERSON', 'Carlo', 'Rizzi', 'carlo.rizzi@email.com', '$2y$10$xjyHDgGqMhwleLNFiOtwDu5ZN7D8a9Lfk9IQUMViFu1r7WdE250xW', '+33755551750', 9),
-       ('DELIVERY_PERSON', 'Johnny', 'Fontane', 'johnny.fontane@email.com', '$2y$10$1yW3fYPoTRyVtShsBfHw7.ue22uu7FGwZ13.811nb/o0oxqkzRbQ2', '+33700555611', 10),
-       ('PIZZA_MAKER', 'Emilio', 'Barzini', 'emilio.barzini@email.com', '$2y$10$RlSJnlDHZyUZoMiMiDg6eeAZYKG.VNYfSmgjL/xAOfmlncyDEv0Ge', '+33745555755', 11),
-       ('PIZZA_MAKER', 'Ottilio', 'Cuneo', 'ottilio.cuneo@email.com', '$2y$10$Xd24ZxX45oSWIr3v9kvqQeqI1MIsAxXSGij6aYuNX/N2ZLAthDPsG', '+33735558128', 12),
-       ('PIZZA_MAKER', 'Philip', 'Tattaglia', 'philip.tattaglia@email.com', '$2y$10$0AZDE2h9ntNyYL03xyUaWuiROloqct9jtB8L1qgn5U9oevWs0PR6W', '+33755553689', 13);
+VALUES ('DELIVERY_PERSON', 'Vito', 'Corleone', 'vito.corleone@email.com',
+        '$2y$10$t9Uzz/8ZElYpGVplhEVT6uJ5tk75C7QdKRO5XyFWeAb7NyDv2wGVq', '+33775550681', 1),
+       ('DELIVERY_PERSON', 'Michael', 'Corleone', 'michael.corleone@email.com',
+        '$2y$10$DMOB3vO7q5mCbLxLQAH4Ju8ozMCQ/.h8sR1o9M676nm2pUO3Ztgy6', '+33655504415', 2),
+       ('DELIVERY_PERSON', 'Santino', 'Corleone', 'santino.corleone@email.com',
+        '$2y$10$.5N52uOGUVu8VRdV5zRht.Wg/IbtW2MsN4y.qSmR0gTQT7UzaCoIG', '+33775550306', 3),
+       ('DELIVERY_PERSON', 'Tom', 'Hagen', 'tom.hagen@email.com',
+        '$2y$10$j9AooWmrxpAMiQZz4cYsyOhjFv0jRTgLdUAbFTLekhr4Y0id/Qh.a', '+33700555917', 4),
+       ('DELIVERY_PERSON', 'Fredo', 'Corleone', 'fredo.corleone@email.com',
+        '$2y$10$vDol.blnFNAxVTNBjhXETe2vQum.BAXP.WFuwQUOFKqb9ZSOCNXee', '+33700555620', 5),
+       ('DELIVERY_PERSON', 'Clemenza', 'Peter', 'clemenza.peter@email.com',
+        '$2y$10$Y.s7wCVyTfywvHz7pOllaOKL0U8eny9Yoty2krLI.65oYjs3.vWom', '+33655510178', 6),
+       ('DELIVERY_PERSON', 'Tessio', 'Salvatore', 'tessio.salvatore@email.com',
+        '$2y$10$LbfjF4fA/UPRrLUu3To1durOwjtMESagNH.NnGioaecedBXSg.CNO', '+33700555130', 7),
+       ('DELIVERY_PERSON', 'Luca', 'Brasi', 'luca.brasi@email.com',
+        '$2y$10$qJhABnd.BZMdcedVa17J8.d6i38NzH/7aREh6ZozEYMO/A8FxC4YG', '+33700555721', 8),
+       ('DELIVERY_PERSON', 'Carlo', 'Rizzi', 'carlo.rizzi@email.com',
+        '$2y$10$xjyHDgGqMhwleLNFiOtwDu5ZN7D8a9Lfk9IQUMViFu1r7WdE250xW', '+33755551750', 9),
+       ('DELIVERY_PERSON', 'Johnny', 'Fontane', 'johnny.fontane@email.com',
+        '$2y$10$1yW3fYPoTRyVtShsBfHw7.ue22uu7FGwZ13.811nb/o0oxqkzRbQ2', '+33700555611', 10),
+       ('PIZZA_MAKER', 'Emilio', 'Barzini', 'emilio.barzini@email.com',
+        '$2y$10$RlSJnlDHZyUZoMiMiDg6eeAZYKG.VNYfSmgjL/xAOfmlncyDEv0Ge', '+33745555755', 11),
+       ('PIZZA_MAKER', 'Ottilio', 'Cuneo', 'ottilio.cuneo@email.com',
+        '$2y$10$Xd24ZxX45oSWIr3v9kvqQeqI1MIsAxXSGij6aYuNX/N2ZLAthDPsG', '+33735558128', 12),
+       ('PIZZA_MAKER', 'Philip', 'Tattaglia', 'philip.tattaglia@email.com',
+        '$2y$10$0AZDE2h9ntNyYL03xyUaWuiROloqct9jtB8L1qgn5U9oevWs0PR6W', '+33755553689', 13),
+       ('MANAGER', 'Francis', 'Ford Coppola', 'toto@email.com',
+        '$2y$10$kS/o2g2I.CzfEla3sCUNDesxOKWLOtn0J7QAuNYho.h6zWcdBNQyO', '+33700555658', 14);
 
 INSERT INTO CLIENT (clientFirstName, clientLastName, clientPhone, clientPassword, clientEmail)
-VALUES ('John', 'Doe', '+33700555564', '$2y$10$YTuQBhpoBrFwSc/Kvlo7WO0xz9WC/RYX0VyXDZavlXZyMtz4AtPN.', 'johndoe@email.com'),
-       ('Sanji', 'Vinsmoke', '+33655586801', '$2y$10$YE6cLkFvItuUcFmqlpOl0eRsAdBogPCbTjYr64A5nhXvo6i9HlhY.', 'sanjivinsmoke@one-piece.com'),
-       ('Alice', 'Johnson', '+33700555292', '$2y$10$XNOcl1bOJ4bqoab8ui8QOuH9PELONujTbx2lGvqt8BgCdoMyZ6wA2', 'alicejohnson@email.com'),
-       ('Charlie', 'Davis', '+33775550167', '$2y$10$MIEkqkALYJwhDC9t6X7IK.uDK2bCU4MR15pnItgRmAz09T2JpSGWO', 'charliedavis@email.com'),
-       ('Eikichi', 'Onizuka', '+33695698324', '$2y$10$BSOGRlqzU2CQbw1ESDUX0OJ1/UmjfZJpRvFuFnPWLFD9/Cr.ozvmC', 'greatteacher@gtomail.com');
+VALUES ('John', 'Doe', '+33700555564', '$2y$10$YTuQBhpoBrFwSc/Kvlo7WO0xz9WC/RYX0VyXDZavlXZyMtz4AtPN.',
+        'johndoe@email.com'),
+       ('Sanji', 'Vinsmoke', '+33655586801', '$2y$10$YE6cLkFvItuUcFmqlpOl0eRsAdBogPCbTjYr64A5nhXvo6i9HlhY.',
+        'sanjivinsmoke@one-piece.com'),
+       ('Alice', 'Johnson', '+33700555292', '$2y$10$XNOcl1bOJ4bqoab8ui8QOuH9PELONujTbx2lGvqt8BgCdoMyZ6wA2',
+        'alicejohnson@email.com'),
+       ('Charlie', 'Davis', '+33775550167', '$2y$10$MIEkqkALYJwhDC9t6X7IK.uDK2bCU4MR15pnItgRmAz09T2JpSGWO',
+        'charliedavis@email.com'),
+       ('Eikichi', 'Onizuka', '+33695698324', '$2y$10$BSOGRlqzU2CQbw1ESDUX0OJ1/UmjfZJpRvFuFnPWLFD9/Cr.ozvmC',
+        'greatteacher@gtomail.com');
 
 
 INSERT INTO CLIENT (clientFirstName, clientLastName, clientPhone)
 VALUES ('Bob', 'Brown', '+33700555658'),
-	     ('Alice', 'Johnson', '+33665948547'),
+       ('Alice', 'Johnson', '+33665948547'),
        ('Charlie', 'Smith', '+33784576123'),
        ('Eva', 'Martinez', '+33659847212'),
        ('David', 'White', '+33715266147'),
        ('Sophie', 'Lee', '+33632564585'),
        ('Luffy', 'Monkey D', '+33748541232');
 
-INSERT INTO CLIENT_ORDER (orderDate, addressId, clientId) VALUES
-    (CURDATE(), 1, 1),
-    (CURDATE(), 18, 5),
-    (CURDATE(), 15, 10),
-    (CURDATE(), 14, 1),
-    (CURDATE(), 15, 2),
-    (CURDATE() - INTERVAL 1 DAY, 16, 3),
-    (CURDATE() - INTERVAL 1 DAY, 17, 4),
-    (CURDATE() - INTERVAL 1 DAY, 18, 5),
-    (CURDATE() - INTERVAL 1 DAY, 11, 6),
-    (CURDATE() - INTERVAL 1 DAY, 12, 7),
-    (CURDATE() - INTERVAL 1 DAY, 13, 8),
-    (CURDATE() - INTERVAL 1 WEEK, 14, 9),
-    (CURDATE() - INTERVAL 1 WEEK, 16, 11),
-    (CURDATE() - INTERVAL 1 WEEK, 17, 12),
-    (CURDATE() - INTERVAL 1 WEEK, 18, 3),
-    (CURDATE() - INTERVAL 1 WEEK, 5, 4),
-    (CURDATE() - INTERVAL 1 WEEK, 2, 2);
+INSERT INTO CLIENT_ORDER (orderDate, addressId, clientId)
+VALUES (CURDATE(), 1, 1),
+       (CURDATE(), 18, 5),
+       (CURDATE(), 15, 10),
+       (CURDATE(), 14, 1),
+       (CURDATE(), 15, 2),
+       (CURDATE(), 16, 3),
+       (CURDATE(), 17, 4),
+       (CURDATE(), 18, 5),
+       (CURDATE(), 11, 6),
+       (CURDATE(), 12, 7),
+       (CURDATE(), 13, 8),
+       (CURDATE(), 14, 9),
+       (CURDATE(), 16, 11),
+       (CURDATE(), 17, 12),
+       (CURDATE(), 18, 3),
+       (CURDATE(), 5, 4),
+       (CURDATE(), 2, 2);
 
 INSERT INTO ORDER_PIZZA (pizzaId, orderId, pizzaQuantity)
 VALUES (1, 1, 2),
@@ -345,15 +368,40 @@ VALUES (1, 1, 1),
 
 -- Insert data into PIZZA_CUSTOM
 INSERT INTO PIZZA_CUSTOM (originalPizza)
-VALUES (2),  -- Margherita
-       (4); -- Quattro Formaggi
+VALUES (2), -- Margherita
+       (4), -- Quattro Formaggi
+       (1);
+-- Marinara
 
 -- Insert data into PIZZA_CUSTOM_INGREDIENT
-INSERT INTO PIZZA_CUSTOM_INGREDIENT (pizzaCustomId, ingredientAddedId, quantityAdded, ingredientRemovedId, quantityRemoved)
-VALUES
-    (1, 7, 50, 5, 100),   -- Customizing Margherita: Add Pepperoni (50g), Remove Mozzarella (100g)
-    (2, 8, 30, 10, 50);  -- Customizing Quattro Formaggi: Add Gorgonzola (30g), Remove Mozzarella (50g)
+-- Pour la Pizza Custom ID 1
+INSERT INTO PIZZA_CUSTOM_INGREDIENT (pizzaCustomId, ingredientAddedId, quantityAdded, ingredientRemovedId)
+VALUES (1, 2, 50, 40),  -- Ajout d'ail
+       (1, 7, 50, 40),  -- Ajout de pepperoni
+       (1, 17, 50, 40), -- Ajout d'olives noires
+       (1, 40, 0, 5),
+       (1, 40, 0, 6),
+       (1, 40, 0, 4);
 
+-- Pour la Pizza Custom ID 2
+INSERT INTO PIZZA_CUSTOM_INGREDIENT (pizzaCustomId, ingredientAddedId, quantityAdded, ingredientRemovedId)
+VALUES (2, 17, 50, 40), -- Ajout d'olives noires
+       (2, 7, 50, 40),  -- Ajout de pepperoni
+       (2, 2, 50, 40),  -- Ajout d'ail
+       (2, 40, 0, 8),
+       (2, 40, 0, 9),
+       (2, 40, 0, 10);
 
-INSERT INTO ORDER_PIZZA_CUSTOM (pizzaCustomId, orderId, pizzaQuantity) VALUES (1, 1, 2);
-INSERT INTO ORDER_PIZZA_CUSTOM (pizzaCustomId, orderId, pizzaQuantity) VALUES (2, 2, 3);
+-- Pour la Pizza Custom ID 3
+INSERT INTO PIZZA_CUSTOM_INGREDIENT (pizzaCustomId, ingredientAddedId, quantityAdded, ingredientRemovedId)
+VALUES (3, 7, 50, 40),  -- Ajout de pepperoni
+       (3, 2, 50, 40),  -- Ajout d'ail
+       (3, 17, 50, 40), -- Ajout d'olives noires
+       (3, 40, 0, 2),   -- Retrait de mozzarella
+       (3, 40, 0, 3),-- Retrait de champignons
+       (3, 40, 0, 4); -- Retrait d'origan
+
+INSERT INTO ORDER_PIZZA_CUSTOM (pizzaCustomId, orderId, pizzaQuantity)
+VALUES (1, 1, 2);
+INSERT INTO ORDER_PIZZA_CUSTOM (pizzaCustomId, orderId, pizzaQuantity)
+VALUES (2, 2, 3);
